@@ -4,40 +4,62 @@ on:
   push:
     branches:
       - dev
-      - staging
-      - prod
+      - release*
+      - release/*
 
 env:
-    DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
-    DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
-    REPO_DIRECTORY: /Repos/${{ github.ref_name  }}/${{ github.event.repository.name }}
-    TESTS_DIRECTORY: tests
-    REQUIREMENTS_PATH: tests/requirements.txt
-    CLUSTER_CONFIG_PATH: tests/cluster.json
+  DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+  DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+  TESTS_DIRECTORY: tests
+  REQUIREMENTS_PATH: tests/requirements.txt
+  CLUSTER_CONFIG_PATH: tests/cluster.json
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-          - name: Checkout
-            uses: actions/checkout@v4
+  Push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
 
-          - name: Create or Update Databricks Repo
-            uses: ./.github/actions/repos
-            with:
-              databricks_host: ${{ env.DATABRICKS_HOST }}
-              databricks_token: ${{ env.DATABRICKS_TOKEN }}
-              repo_url:  ${{ github.event.repository.url }}
-              branch: ${{ github.ref_name  }}
-              databricks_path: ${{ env.REPO_DIRECTORY }}
+    - name: Databricks Repo Path
+      id: repo_path
+      run: |
+        if [[ "${{ github.ref_name }}" == "dev" ]]; then
+          echo REPO_PATH=dev >> $GITHUB_OUTPUT
+        else
+          echo REPO_PATH=staging >> $GITHUB_OUTPUT
+        fi
 
-          - name: Run Tests
-            uses: ./.github/actions/jobs
-            with:
-              databricks_host: ${{ env.DATABRICKS_HOST }}
-              databricks_token: ${{ env.DATABRICKS_TOKEN }}
-              repo_url:  ${{ github.event.repository.url }}
-              branch: ${{ github.ref_name  }}
-              folder_path: ${{ env.TESTS_DIRECTORY}}
-              requirements_path: ${{ env.REQUIREMENTS_PATH }}
-              cluster_config_path: ${{ env.CLUSTER_CONFIG_PATH }}
+    - name: Create or Update Databricks Repo
+      uses: ./.github/actions/repos
+      with:
+        databricks_host: ${{ env.DATABRICKS_HOST }}
+        databricks_token: ${{ env.DATABRICKS_TOKEN }}
+        repo_url:  ${{ github.event.repository.url }}
+        branch: ${{ github.ref_name  }}
+        databricks_path: /Repos/${{ steps.repo_path.outputs.REPO_PATH }}/${{ github.event.repository.name }}
+
+    - name: Run Tests
+      uses: ./.github/actions/jobs
+      with:
+        databricks_host: ${{ env.DATABRICKS_HOST }}
+        databricks_token: ${{ env.DATABRICKS_TOKEN }}
+        repo_url:  ${{ github.event.repository.url }}
+        branch: ${{ github.ref_name  }}
+        folder_path: ${{ env.TESTS_DIRECTORY}}
+        requirements_path: ${{ env.REQUIREMENTS_PATH }}
+        cluster_config_path: ${{ env.CLUSTER_CONFIG_PATH }}
+
+  Release:
+    needs: [Push]
+    if: startsWith(github.ref_name, 'release')
+    runs-on: ubuntu-latest
+    steps:
+    - name: Create or Update Databricks Repo
+      uses: ./.github/actions/repos
+      with:
+        databricks_host: ${{ env.DATABRICKS_HOST }}
+        databricks_token: ${{ env.DATABRICKS_TOKEN }}
+        repo_url:  ${{ github.event.repository.url }}
+        branch: ${{ github.ref_name  }}
+        databricks_path: /Repos/prod/${{ github.event.repository.name }}
