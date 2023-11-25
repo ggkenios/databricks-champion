@@ -12,12 +12,18 @@ inputs:
   repo_url:
     required: true
     description: "The URL of the git repository to import"
-  databricks_path:
-    required: true
-    description: "The path in Databricks where the repository should be imported"
   branch:
     required: true
     description: "The branch to import. If not specified, the default branch will be used"
+  folder_path:
+    required: true
+    description: "The path to the folder containing the notebook to run"
+  requirements_path:
+    required: true
+    description: "The path to the requirements.txt file"
+  cluster_config_path:
+    required: true
+    description: "The path to the json file for the cluster configuration"
 
 
 runs:
@@ -34,94 +40,137 @@ runs:
       run: |
         python3 -c '
         import requests
+        import json
+        import os
+        import time
 
 
-        class DatabricksRepos:
+        class DatabricksJobs:
             def __init__(self, databricks_url: str, databricks_token: str):
                 self.databricks_url = databricks_url
                 self.databricks_token = databricks_token
 
-            def create_repo(self,
-                repo_url: str,
-                databricks_path: str,
-                provider: str = "gitHub",
+            @staticmethod
+            def get_all_files_in_folder(folder_path) -> list[str]:
+                all_files = []
+                for foldername, _, filenames in os.walk(folder_path):
+                    for filename in filenames:
+                        if filename.endswith(".py"):
+                            file_path = os.path.join(foldername, filename)
+                            fixed_path = file_path.replace("\\", "/").replace(".py", "")
+                            all_files.append(fixed_path)
+                return all_files
+
+            @staticmethod
+            def get_requirements(requirements_path: str) -> list[dict]:
+                requirements = []
+                with open(requirements_path, "r") as f:
+                    for line in f.readlines():
+                        requirements.append(
+                            {"pypi":{"package": line.replace("\n", "")}}
+                        )
+                return requirements
+
+            @staticmethod
+            def get_cluster_config(cluster_config_path: str) -> dict:
+                return json.load(open(cluster_config_path))
+
+            def create_tasks(
+                self,
+                folder_path: str,
+                requirements_path: str,
+                cluster_config_path: str,
+            ) -> list[dict]:
+                all_files = self.get_all_files_in_folder(folder_path)
+                requirements = self.get_requirements(requirements_path)
+                cluster_config = self.get_cluster_config(cluster_config_path)
+                tasks = []
+                for file in all_files:
+                    len_folder_path = len(folder_path)
+                    fixed_file = file[len_folder_path + 1:]
+                    tasks.append({
+                        "task_key": fixed_file,
+                        "new_cluster": cluster_config,
+                        "libraries": requirements,
+                        "notebook_task": {
+                            "notebook_path": file,
+                            "source": "GIT",
+                        }
+                    })
+                return tasks
+
+            def one_time_run(
+                self, 
+                git_repo: str,
+                git_branch: str,
+                tasks: list[dict],
+                git_provider: str = "gitHub"
             ) -> None:
-                """Copies a Repo from your git provider to Databricks."""
+                repo_name = git_repo.split("/")[-1].replace(".git", "")
                 response = requests.post(
-                    url=f"{self.databricks_url}/api/2.0/repos",
+                    f"{self.databricks_url}/api/2.1/jobs/runs/submit",
                     headers={"Authorization": f"Bearer {self.databricks_token}"},
                     json={
-                        "url": repo_url,
-                        "provider": provider,
-                        "path": databricks_path,
+                        "tasks": tasks,
+                        "git_source": {
+                            "git_url": git_repo,
+                            "git_provider": git_provider,
+                            "git_branch": git_branch
+                        },
+                        "run_name": f"Repo: {repo_name} | Branch: {git_branch} | Reason: Testing",
                     }
                 )
-                print(response.text)
-                response.raise_for_status()
-                return
-
-            def update_repo(self,
-                repo_id: str,
-                branch: str = None,
-                tag: str = None,
-            ) -> None:
-                """Updates a Repo on Databricks to sync with your git provider."""
-                if not (tag or branch):
-                    raise AttributeError("You need to specify either a branch or a tag")
-                elif tag:
-                    request_json = {"tag": tag}
+                if response.status_code >= 300:
+                    print(response.json())
+                    raise Exception(f"Job failed to be submitted.")
                 else:
-                    request_json = {"branch": branch}
+                    link = f"{self.databricks_url}/#job/runs/"
+                    print(f"Job submitted: {link}")
+                return response.json()["run_id"]
 
-                response = requests.patch(
-                    url=f"{self.databricks_url}/api/2.0/repos/{repo_id}",
-                    headers={"Authorization": f"Bearer {self.databricks_token}"},
-                    json=request_json,
-                )
-                print(response.text)
-                response.raise_for_status()
-                return
-
-            def get_repo_id(self,
-                databricks_path: str
-            ) -> int | None:
-                """Gets the Databricks Repo ID if it exists, by path."""
+            def await_run_completion(self, run_id: int) -> None:
                 response = requests.get(
-                    url=f"{self.databricks_url}/api/2.0/repos",
-                    headers={"Authorization": f"Bearer {self.databricks_token}"},
-                    json={"path_prefix": databricks_path}
+                    f"{self.databricks_url}/api/2.1/jobs/runs/get?run_id={run_id}",
+                    headers={"Authorization": f"Bearer {self.databricks_token}"}
                 )
-                response.raise_for_status()
-                try:
-                    return response.json()["repos"][0]["id"]
-                except KeyError:
-                    return None
-
-            def create_or_update_repo(self,
-                repo_url: str,
-                databricks_path: str,
-                branch: str = None,
-                tag: str = None,
-                provider: str = "gitHub",
-            ) -> None:
-                """Creates or updates a Databricks Repo"""
-                id = self.get_repo_id(databricks_path)
-
-                if id:
-                    self.update_repo(id, branch, tag)
-                    print("Repo updated.")
+                if response.status_code >= 300:
+                    raise Exception(f"Job failed to be retrieved.")
                 else:
-                    self.create_repo(repo_url, databricks_path, provider)
-                    print("Repo created.")
-                return
+                    status = response.json()["state"].get("result_state")
+                    while not status:
+                        print("Job is still running...")
+                        response = requests.get(
+                            f"{self.databricks_url}/api/2.1/jobs/runs/get?run_id={run_id}",
+                            headers={"Authorization": f"Bearer {self.databricks_token}"}
+                        )
+                        status = response.json()["state"].get("result_state")
+                        time.sleep(30)
+                    if response.json()["state"]["result_state"] == "SUCCESS":
+                        print("Job completed successfully.")
+                    else:
+                        job_id = response.json()["job_id"]
+                        link = f"{self.databricks_url}/#job/{job_id}/run/{run_id}"
+                        message = (
+                            "Job failed. Click on the link below: \n"
+                            f"{link} \n"
+                        )
+                        print(message)
+                        raise Exception(message)
 
 
-        DatabricksRepos(
-            databricks_url = "${{ inputs.databricks_host }}",
-            databricks_token = "${{ inputs.databricks_token }}",
-        ).create_or_update_repo(
-            repo_url = "${{ inputs.repo_url }}",
-            databricks_path = "${{ inputs.databricks_path }}",
-            branch = "${{ inputs.branch }}",
+        job = DatabricksJobs(
+            databricks_url="${{ inputs.databricks_host }}",
+            databricks_token="${{ inputs.databricks_token }}"
         )
+        tasks = job.create_tasks(
+            folder_path="${{ inputs.folder_path }}", 
+            requirements_path="${{ inputs.requirements_path }}",
+            cluster_config_path="${{ inputs.cluster_config_path }}",
+        )
+        run_id = job.one_time_run(
+            git_repo="${{ inputs.repo_url }}",
+            git_branch=${{ inputs.branch }},
+            tasks=tasks,
+        )
+        job.await_run_completion(run_id=run_id)
         '

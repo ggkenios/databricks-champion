@@ -1,5 +1,5 @@
 name: "repos"
-description: "Import a git repository into Databricks"
+description: "Creates or updates a Databricks Repo"
 
 
 inputs:

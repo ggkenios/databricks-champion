@@ -3,7 +3,7 @@ from .code2 import generate_data2
 from pyspark.sql import SparkSession
 
 
-spark = SparkSession().builder.getOrCreate()
+spark: SparkSession = SparkSession.builder.getOrCreate()
 
 
 __all__ = [

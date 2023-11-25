@@ -18,10 +18,6 @@ jobs:
           - name: Checkout
             uses: actions/checkout@v4
 
-          - name: Install databricks CLI
-            run: |
-              curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
-
           - name: Update Databricks Repo
             uses: ./.github/actions/repos
             with:
