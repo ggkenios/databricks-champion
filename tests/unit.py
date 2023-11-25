@@ -1,6 +1,6 @@
 # Databricks notebook source
-from chispa import assert_df_equality
 from runtime.nutterfixture import NutterFixture
+from chispa import assert_df_equality
 
 from my_package import (
     generate_data1,
