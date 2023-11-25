@@ -22,7 +22,7 @@ jobs:
           - name: Checkout
             uses: actions/checkout@v4
 
-          - name: Update Databricks Repo
+          - name: Create or Update Databricks Repo
             uses: ./.github/actions/repos
             with:
               databricks_host: ${{ env.DATABRICKS_HOST }}
