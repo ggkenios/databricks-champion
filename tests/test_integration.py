@@ -22,7 +22,7 @@ class IntegrationTest(NutterFixture):
         assert (spark.catalog.tableExists(self.table_name))
 
     def assertion_pipeline_schema(self):
-        schema = StructType([StructField("id", LongType(), False)])
+        schema = StructType([StructField("id", LongType(), True)])
         expected_df = spark.createDataFrame([(42,)], schema=schema)
         df = spark.read.table(self.table_name).limit(1)
         assert (df.schema == expected_df.schema)
@@ -35,7 +35,7 @@ class IntegrationTest(NutterFixture):
         assert (first_row[0] == 10)
 
     def assertion_pipeline_values(self):
-        df = spark.sql(f"SELECT * FROM {self.table_name} LIMIT 1 ORDER BY id")
+        df = spark.sql(f"SELECT * FROM {self.table_name} ORDER BY id LIMIT 1")
         assert (df.first()[0] == 0)
 
 

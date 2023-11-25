@@ -65,7 +65,6 @@ runs:
                         "path": databricks_path,
                     }
                 )
-                print(response.text)
                 response.raise_for_status()
                 return
 
@@ -87,7 +86,6 @@ runs:
                     headers={"Authorization": f"Bearer {self.databricks_token}"},
                     json=request_json,
                 )
-                print(response.text)
                 response.raise_for_status()
                 return
 

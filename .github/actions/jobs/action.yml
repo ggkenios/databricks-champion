@@ -141,6 +141,15 @@ runs:
                     raise Exception(f"Job failed to be retrieved.")
                 # If the status code is 200, check if the job is still running
                 else:
+                    # Print job link
+                    job_id = response.json()["job_id"]
+                    link = f"{self.databricks_url}/#job/{job_id}/run/{run_id}"
+                    message = (
+                        "Job is running. Click on the link below: \n"
+                        f"{link} \n"
+                    )
+                    print(message)
+
                     status = response.json()["state"].get("result_state")
                     while not status:
                         print("Job is still running...")
@@ -155,8 +164,6 @@ runs:
                         print("Job completed successfully.")
                     # If the job is not running and it failed, raise an exception
                     else:
-                        job_id = response.json()["job_id"]
-                        link = f"{self.databricks_url}/#job/{job_id}/run/{run_id}"
                         message = (
                             "Job failed. Click on the link below: \n"
                             f"{link} \n"
