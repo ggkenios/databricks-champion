@@ -3,11 +3,12 @@ name: Databricks CI/CD
 on:
   push:
     branches:
-      - "*"
-      - "**"
+      - dev
+      - staging
+      - prod
 
 env:
-    DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+    DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
     DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
     REPO_DIRECTORY: /Repos/${{ github.ref_name  }}/${{ github.event.repository.name }}
     TESTS_DIRECTORY: tests
