@@ -5,11 +5,11 @@ from pyspark.sql import DataFrame, SparkSession
 
 def generate_data1(
     spark: SparkSession,
+    table_name: str = "my_cool_data",
     n: int = 1000,
-    name: str = "my_cool_data"
 ) -> None:
     df = spark.range(0, n)
-    df.createOrReplaceTempView(name)
+    df.createOrReplaceTempView(table_name)
 
 
 def upper_columns(df: DataFrame, cols: list) -> DataFrame:

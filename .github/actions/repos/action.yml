@@ -12,13 +12,12 @@ inputs:
   repo_url:
     required: true
     description: "The URL of the git repository to import"
-  databricks_path:
-    required: true
-    description: "The path in Databricks where the repository should be imported"
   branch:
     required: true
     description: "The branch to import. If not specified, the default branch will be used"
-
+  databricks_path:
+    required: true
+    description: "The path in Databricks where the repository should be imported"
 
 runs:
   using: "composite"

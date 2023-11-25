@@ -9,7 +9,10 @@ on:
 env:
     DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
     DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
-    REPO_DIRECTORY: /Repos/dev/${{ github.event.repository.name }}
+    REPO_DIRECTORY: /Repos/${{ github.ref_name  }}/${{ github.event.repository.name }}
+    TESTS_DIRECTORY: tests
+    REQUIREMENTS_PATH: tests/requirements.txt
+    CLUSTER_CONFIG_PATH: tests/cluster_config.json
 
 jobs:
     build:
@@ -23,6 +26,18 @@ jobs:
             with:
               databricks_host: ${{ env.DATABRICKS_HOST }}
               databricks_token: ${{ env.DATABRICKS_TOKEN }}
-              repo_directory:  ${{ github.event.repository.url }}
-              databricks_path: ${{ env.REPO_DIRECTORY }}
+              repo_url:  ${{ github.event.repository.url }}
               branch: ${{ github.ref_name  }}
+              databricks_path: ${{ env.REPO_DIRECTORY }}
+
+          - name: Run Tests
+            uses: ./.github/actions/jobs
+            with:
+              databricks_host: ${{ env.DATABRICKS_HOST }}
+              databricks_token: ${{ env.DATABRICKS_TOKEN }}
+              repo_url:  ${{ github.event.repository.url }}
+              branch: ${{ github.ref_name  }}
+              folder_path: ${{ env.TESTS_DIRECTORY}}
+              requirements_path: ${{ env.REQUIREMENTS_PATH }}
+              cluster_config_path: ${{ env.CLUSTER_CONFIG_PATH }}
+              
