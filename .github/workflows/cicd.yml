@@ -1,0 +1,31 @@
+name: Databricks CI/CD
+
+on:
+  push:
+    branches:
+      - "*"
+      - "**"
+
+env:
+    DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+    DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+    REPO_DIRECTORY: dev/${{ github.event.repository.name }}
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+        steps:
+          - name: Checkout
+            uses: actions/checkout@v4
+
+          - name: Install databricks CLI
+            run: |
+              curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
+          
+          - name: Login to databricks
+            run: |
+              databricks configure --host ${{ env.DATABRICKS_HOST }} --token ${{ env.DATABRICKS_TOKEN }}
+            
+          - name: Update Repo
+            run: |
+              databricks repos update --path $REPO_DIRECTORY --branch "${{github.ref_name}}"

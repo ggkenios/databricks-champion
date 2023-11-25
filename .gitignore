@@ -1,0 +1,7 @@
+# VSCode
+__pycache__
+.vscode
+
+# Poetry
+pyproject.toml
+poetry.lock
