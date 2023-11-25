@@ -29,7 +29,7 @@ class IntegrationTest(NutterFixture):
         schema = StructType([StructField("id", LongType(), True)])
         expected_df = spark.createDataFrame([(42,)], schema=schema)
         # Assert that the schema of the table matches the expected schema
-        df = spark.read.table(self.table_name).limit(1)
+        df = spark.sql(f"SELECT * FROM {self.table_name} LIMIT 1")
         assert (df.schema == expected_df.schema)
 
     def assertion_pipeline_rows(self):
