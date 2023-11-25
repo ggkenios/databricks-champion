@@ -9,6 +9,9 @@ from my_package import (
 
 
 TABLE_NAME = "my_data"
+COUNT = 10
+MIN_VALUE = 0
+
 
 class IntegrationTest(NutterFixture):
     def __init__(self):
@@ -22,21 +25,20 @@ class IntegrationTest(NutterFixture):
         assert (spark.catalog.tableExists(self.table_name))
 
     def assertion_pipeline_schema(self):
+        # Create a dataframe with the expected schema
         schema = StructType([StructField("id", LongType(), True)])
         expected_df = spark.createDataFrame([(42,)], schema=schema)
+        # Assert that the schema of the table matches the expected schema
         df = spark.read.table(self.table_name).limit(1)
         assert (df.schema == expected_df.schema)
 
     def assertion_pipeline_rows(self):
-        some_tbl = spark.sql(
-            f"SELECT COUNT(*) AS total FROM {self.table_name}"
-        )
-        first_row = some_tbl.first()
-        assert (first_row[0] == 10)
+        df = spark.sql(f"SELECT COUNT(*) AS total FROM {self.table_name}")
+        assert (df.first()[0] == COUNT)
 
     def assertion_pipeline_values(self):
         df = spark.sql(f"SELECT * FROM {self.table_name} ORDER BY id LIMIT 1")
-        assert (df.first()[0] == 0)
+        assert (df.first()[0] == MIN_VALUE)
 
 
 if __name__ == "__main__":
