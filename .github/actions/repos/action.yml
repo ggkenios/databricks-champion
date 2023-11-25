@@ -1,0 +1,127 @@
+name: "repos"
+description: "Import a git repository into Databricks"
+
+
+inputs:
+  databricks_host:
+    required: true
+    description: "The URL of your Databricks workspace, e.g. https://westeurope.azuredatabricks.net"
+  databricks_token:
+    required: true
+    description: "The Databricks token to use for authentication"
+  repo_url:
+    required: true
+    description: "The URL of the git repository to import"
+  databricks_path:
+    required: true
+    description: "The path in Databricks where the repository should be imported"
+  branch:
+    required: true
+    description: "The branch to import. If not specified, the default branch will be used"
+
+
+runs:
+  using: "composite"
+  steps:
+    - name: Import libraries
+      shell: bash
+      run: |
+        pip install requests
+
+    - name: Get environment
+      id: check
+      shell: bash
+      run: |
+        python3 -c '
+        import requests
+
+
+        class DatabricksRepos:
+            def __init__(self):
+                self.databricks_url = self.config.databricks_url
+                self.databricks_token = self.config.databricks_token
+
+            def create_repo(self,
+                repo_url: str,
+                databricks_path: str,
+                provider: str = "gitHub",
+            ) -> None:
+                """Copies a Repo from your git provider to Databricks."""
+                response = requests.post(
+                    url=f"{self.databricks_url}/api/2.0/repos",
+                    headers={"Authorization": f"Bearer {self.databricks_token}"},
+                    json={
+                        "url": repo_url,
+                        "provider": provider,
+                        "path": databricks_path,
+                    }
+                )
+                print(response.text)
+                response.raise_for_status()
+                return
+
+            def update_repo(self,
+                repo_id: str,
+                branch: str = None,
+                tag: str = None,
+            ) -> None:
+                """Updates a Repo on Databricks to sync with your git provider."""
+                if not (tag or branch):
+                    raise AttributeError("You need to specify either a branch or a tag")
+                elif tag:
+                    request_json = {"tag": tag}
+                else:
+                    request_json = {"branch": branch}
+
+                response = requests.patch(
+                    url=f"{self.databricks_url}/api/2.0/repos/{repo_id}",
+                    headers={"Authorization": f"Bearer {self.databricks_token}"},
+                    json=request_json,
+                )
+                print(response.text)
+                response.raise_for_status()
+                return
+
+            def get_repo_id(self,
+                databricks_path: str
+            ) -> int | None:
+                """Gets the Databricks Repo ID if it exists, by path."""
+                response = requests.get(
+                    url=f"{self.databricks_url}/api/2.0/repos",
+                    headers={"Authorization": f"Bearer {self.databricks_token}"},
+                    json={"path_prefix": databricks_path}
+                )
+                response.raise_for_status()
+                try:
+                    return response.json()["repos"][0]["id"]
+                except KeyError:
+                    return None
+
+            def create_or_update_repo(self,
+                repo_url: str,
+                databricks_path: str,
+                branch: str = None,
+                tag: str = None,
+                provider: str = "gitHub",
+            ) -> None:
+                """Creates or updates a Databricks Repo"""
+                id = self.get_repo_id(databricks_path)
+
+                if id:
+                    self.update_repo(id, branch, tag)
+                    print("Repo updated.")
+                else:
+                    self.create_repo(repo_url, databricks_path, provider)
+                    print("Repo created.")
+                return
+
+
+        DatabricksRepos(
+            databricks_url = "${{ inputs.databricks_host }}",
+            databricks_token = "${{ inputs.databricks_token }}",
+        ).create_or_update_repo(
+            repo_url = "${{ inputs.repo_url }}",
+            databricks_path = "${{ inputs.databricks_path }}",
+            branch = "${{ inputs.branch }}",
+        )
+        '

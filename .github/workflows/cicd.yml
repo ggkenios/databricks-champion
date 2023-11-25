@@ -21,11 +21,12 @@ jobs:
           - name: Install databricks CLI
             run: |
               curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
-          
-          - name: Login to databricks
-            run: |
-              databricks configure --host ${{ env.DATABRICKS_HOST }} --token ${{ env.DATABRICKS_TOKEN }}
-            
-          - name: Update Repo
-            run: |
-              databricks repos update --path $REPO_DIRECTORY --branch "${{github.ref_name}}"
+
+          - name: Update Databrocls Repo
+            uses: ./.github/actions/repos
+            with:
+              databricks_host: ${{ env.DATABRICKS_HOST }}
+              databricks_token: ${{ env.DATABRICKS_TOKEN }}
+              repo_directory:  ${{ github.event.repository.url }}
+              databricks_path: ${{ env.REPO_DIRECTORY }}
+              branch: ${{ github.ref_name  }}
