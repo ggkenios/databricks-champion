@@ -9,7 +9,7 @@ on:
 env:
     DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
     DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
-    REPO_DIRECTORY: dev/${{ github.event.repository.name }}
+    REPO_DIRECTORY: /Repos/dev/${{ github.event.repository.name }}
 
 jobs:
     build:
@@ -22,7 +22,7 @@ jobs:
             run: |
               curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/main/install.sh | sh
 
-          - name: Update Databrocls Repo
+          - name: Update Databricks Repo
             uses: ./.github/actions/repos
             with:
               databricks_host: ${{ env.DATABRICKS_HOST }}
