@@ -12,7 +12,7 @@ env:
     REPO_DIRECTORY: /Repos/${{ github.ref_name  }}/${{ github.event.repository.name }}
     TESTS_DIRECTORY: tests
     REQUIREMENTS_PATH: tests/requirements.txt
-    CLUSTER_CONFIG_PATH: tests/cluster_config.json
+    CLUSTER_CONFIG_PATH: tests/cluster.json
 
 jobs:
     build:
