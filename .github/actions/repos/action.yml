@@ -40,6 +40,16 @@ runs:
                 self.databricks_url = databricks_url
                 self.databricks_token = databricks_token
 
+            def create_directory(self, path: str) -> None:
+                """Creates a directory in Databricks."""
+                response = requests.post(
+                    url=f"{self.databricks_url}/api/2.0/workspace/mkdirs",
+                    headers={"Authorization": f"Bearer {self.databricks_token}"},
+                    json={"path": path},
+                )
+                response.raise_for_status()
+                return
+
             def create_repo(self,
                 repo_url: str,
                 databricks_path: str,
@@ -110,9 +120,13 @@ runs:
                     self.update_repo(id, branch, tag)
                     print("Repo updated.")
                 else:
-                    self.create_repo(repo_url, databricks_path, provider)
+                    try:
+                        self.create_repo(repo_url, databricks_path, provider)
+                    except requests.exceptions.HTTPError:
+                        dir_to_create = "/".join(databricks_path.split("/")[:-1])
+                        self.create_directory(dir_to_create)
+                        self.create_repo(repo_url, databricks_path, provider)
                     print("Repo created.")
-                return
 
 
         DatabricksRepos(
