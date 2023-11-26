@@ -32,11 +32,8 @@ class UnitTest(NutterFixture):
         generate_data2(spark=spark, table_name=self.code2_table_name)
 
     def assertion_code2_percent_run(self):
-        some_tbl = spark.sql(
-            f"SELECT COUNT(*) AS total FROM {self.code2_table_name}"
-        )
-        first_row = some_tbl.first()
-        assert (first_row[0] == 10)
+        df = spark.sql(f"SELECT COUNT(*) AS total FROM {self.code2_table_name}")
+        assert (df.first[0] == 10)
 
     def after_code2_percent_run(self):
         spark.sql(f"DROP TABLE {self.code2_table_name}")
