@@ -6,6 +6,7 @@ from pyspark.sql import DataFrame
 def running_on_databricks(env_var: str = "DATABRICKS_RUNTIME_VERSION") -> bool:
     """Check if the code is running on Databricks."""
     import os
+
     environment_var = os.getenv(env_var, None)
     if environment_var:
         return True
@@ -27,6 +28,7 @@ def get_spark_session() -> SparkSession:
         spark = SparkSession.builder.getOrCreate()
     else:
         import findspark
+
         findspark.init()
 
         conf = SparkConf()

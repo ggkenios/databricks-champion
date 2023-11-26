@@ -33,14 +33,14 @@ class UnitTest(NutterFixture):
 
     def assertion_code1_percent_run(self):
         df = spark.read.table(self.table_name_1)
-        assert(df.count() == self.count_1)
+        assert df.count() == self.count_1
 
     def run_code2_percent_run(self):
         generate_data2(spark=spark, table_name=self.table_name_2)
 
     def assertion_code2_percent_run(self):
         df = spark.sql(f"SELECT COUNT(*) AS total FROM {self.table_name_2}")
-        assert (df.first[0] == self.count_2)
+        assert df.first[0] == self.count_2
 
     def after_code2_percent_run(self):
         spark.sql(f"DROP TABLE {self.table_name_2}")

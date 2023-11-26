@@ -24,7 +24,7 @@ class IntegrationTest(NutterFixture):
         generate_data2(spark=spark, table_name=self.table_name)
 
     def assertion_pipeline(self):
-        assert (spark.catalog.tableExists(self.table_name))
+        assert spark.catalog.tableExists(self.table_name)
 
     def assertion_pipeline_schema(self):
         # Create a dataframe with the expected schema
@@ -32,15 +32,15 @@ class IntegrationTest(NutterFixture):
         expected_df = spark.createDataFrame([(42,)], schema=schema)
         # Assert that the schema of the table matches the expected schema
         df = spark.sql(f"SELECT * FROM {self.table_name} LIMIT 1")
-        assert (df.schema == expected_df.schema)
+        assert df.schema == expected_df.schema
 
     def assertion_pipeline_rows(self):
         df = spark.sql(f"SELECT COUNT(*) AS total FROM {self.table_name}")
-        assert (df.first()[0] == self.count)
+        assert df.first()[0] == self.count
 
     def assertion_pipeline_values(self):
         df = spark.sql(f"SELECT * FROM {self.table_name} ORDER BY id LIMIT 1")
-        assert (df.first()[0] == self.min_value)
+        assert df.first()[0] == self.min_value
 
 
 if __name__ == "__main__":

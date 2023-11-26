@@ -13,7 +13,7 @@ def generate_data1(
 
 
 def generate_data2(spark: SparkSession, table_name: str) -> None:
-    df = spark.range(0,10)
+    df = spark.range(0, 10)
     df.write.format("delta").mode("overwrite").saveAsTable(table_name)
 
 
@@ -24,7 +24,7 @@ def upper_columns(df: DataFrame, cols: list) -> DataFrame:
             new_cols.append(F.upper(F.col(field.name)).alias(field.name))
         else:
             new_cols.append(F.col(field.name))
-            
+
     return df.select(*new_cols)
 
 
@@ -35,5 +35,5 @@ def lower_columns(df: DataFrame, cols: list) -> DataFrame:
             new_cols.append(F.lower(F.col(field.name)).alias(field.name))
         else:
             new_cols.append(F.col(field.name))
-            
+
     return df.select(*new_cols)

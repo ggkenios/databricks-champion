@@ -36,7 +36,7 @@ jobs:
         databricks_host: ${{ env.DATABRICKS_HOST }}
         databricks_token: ${{ env.DATABRICKS_TOKEN }}
         repo_url:  ${{ github.event.repository.url }}
-        branch: ${{ github.ref_name  }}
+        branch: ${{ github.ref_name }}
         databricks_path: /Repos/${{ steps.repo_path.outputs.REPO_PATH }}/${{ github.event.repository.name }}
 
     - name: Run Tests
@@ -45,8 +45,8 @@ jobs:
         databricks_host: ${{ env.DATABRICKS_HOST }}
         databricks_token: ${{ env.DATABRICKS_TOKEN }}
         repo_url:  ${{ github.event.repository.url }}
-        branch: ${{ github.ref_name  }}
-        folder_path: ${{ env.TESTS_DIRECTORY}}
+        branch: ${{ github.ref_name }}
+        folder_path: ${{ env.TESTS_DIRECTORY }}
         requirements_path: ${{ env.REQUIREMENTS_PATH }}
         cluster_config_path: ${{ env.CLUSTER_CONFIG_PATH }}
 
@@ -61,5 +61,5 @@ jobs:
         databricks_host: ${{ env.DATABRICKS_HOST }}
         databricks_token: ${{ env.DATABRICKS_TOKEN }}
         repo_url:  ${{ github.event.repository.url }}
-        branch: ${{ github.ref_name  }}
+        branch: ${{ github.ref_name }}
         databricks_path: /Repos/prod/${{ github.event.repository.name }}
