@@ -12,14 +12,20 @@
 <br>
 
 ## What it does
-A simple implementation of a CI/CD pipeline for Databricks using GitHub Actions. The pipeline is triggered when a new commit is pushed to selected branches. The pipeline consists of the following steps:
-* **Push** - Pushes the code to the Databricks workspace and runs unit and integration tests.
-* **Release** - If the tests pass on the staging environment, the code is released to the production environment.
+A simple implementation of a CI/CD pipeline for Databricks using **`GitHub Actions`** & **`Databricks Workflows`**. <br>
+The pipeline is triggered when a new commit is pushed to selected branches. <br>
+<br>
+The pipeline consists of the following steps:
+* **Push** <br>
+    Pushes the code to the Databricks workspace and runs unit and integration tests.
+
+* **Release** <br>
+    If the tests pass on the staging environment, the code is released to the production environment.
 <br>
 
 ## Requirements
-* Databricks workspace
-* Link Databricks workspace to GitHub account
-* GitHub secrets for:
-    * Databricks workspace URL
+* **__Databricks__** workspace
+* Link between **__Databricks__** workspace and **__GitHub__** account
+* **__GitHub secrets__** for:
+    * Databricks URL
     * Databricks token
