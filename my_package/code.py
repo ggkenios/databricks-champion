@@ -5,11 +5,16 @@ from pyspark.sql import DataFrame, SparkSession
 
 def generate_data1(
     spark: SparkSession,
-    table_name: str = "my_cool_data",
+    table_name: str,
     n: int = 1000,
 ) -> None:
     df = spark.range(0, n)
     df.createOrReplaceTempView(table_name)
+
+
+def generate_data2(spark: SparkSession, table_name: str) -> None:
+    df = spark.range(0,10)
+    df.write.format("delta").mode("overwrite").saveAsTable(table_name)
 
 
 def upper_columns(df: DataFrame, cols: list) -> DataFrame:

@@ -10,33 +10,40 @@ from my_package import (
 )
 
 
+TABLE_NAME_1 = "my_cool_data"
+TABLE_NAME_2 = "my_data"
+COUNT_1 = 100
+COUNT_2 = 10
+
+
 class UnitTest(NutterFixture):
     def __init__(self):
-        self.code2_table_name = "my_data"
-        self.code1_view_name = "my_cool_data"
-        self.code1_num_entries = 100
+        self.table_name_1 = TABLE_NAME_1
+        self.table_name_2 = TABLE_NAME_2
+        self.count_1 = COUNT_1
+        self.count_2 = COUNT_2
         NutterFixture.__init__(self)
 
     def run_code1_percent_run(self):
         generate_data1(
             spark=spark,
-            table_name=self.code1_view_name,
-            n=self.code1_num_entries,
+            table_name=self.table_name_1,
+            n=self.count_1,
         )
 
     def assertion_code1_percent_run(self):
-        df = spark.read.table(self.code1_view_name)
-        assert(df.count() == self.code1_num_entries)
+        df = spark.read.table(self.table_name_1)
+        assert(df.count() == self.count_1)
 
     def run_code2_percent_run(self):
-        generate_data2(spark=spark, table_name=self.code2_table_name)
+        generate_data2(spark=spark, table_name=self.table_name_2)
 
     def assertion_code2_percent_run(self):
-        df = spark.sql(f"SELECT COUNT(*) AS total FROM {self.code2_table_name}")
-        assert (df.first[0] == 10)
+        df = spark.sql(f"SELECT COUNT(*) AS total FROM {self.table_name_2}")
+        assert (df.first[0] == self.count_2)
 
     def after_code2_percent_run(self):
-        spark.sql(f"DROP TABLE {self.code2_table_name}")
+        spark.sql(f"DROP TABLE {self.table_name_2}")
 
     def assertion_upper_columns_percent_run(self):
         cols = ["col1", "col2", "col3"]

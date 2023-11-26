@@ -16,6 +16,8 @@ MIN_VALUE = 0
 class IntegrationTest(NutterFixture):
     def __init__(self):
         self.table_name = TABLE_NAME
+        self.count = COUNT
+        self.min_value = MIN_VALUE
         NutterFixture.__init__(self)
 
     def run_pipeline(self):
@@ -34,11 +36,11 @@ class IntegrationTest(NutterFixture):
 
     def assertion_pipeline_rows(self):
         df = spark.sql(f"SELECT COUNT(*) AS total FROM {self.table_name}")
-        assert (df.first()[0] == COUNT)
+        assert (df.first()[0] == self.count)
 
     def assertion_pipeline_values(self):
         df = spark.sql(f"SELECT * FROM {self.table_name} ORDER BY id LIMIT 1")
-        assert (df.first()[0] == MIN_VALUE)
+        assert (df.first()[0] == self.min_value)
 
 
 if __name__ == "__main__":
