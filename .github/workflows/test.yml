@@ -1,7 +1,11 @@
-name: Databricks CI/CD
+name: Echo
 
 on:
-  push
+  push:
+    branches:
+      - main
+    tags:
+      - v*
 
 jobs:
   Push:
@@ -11,5 +15,5 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Echo
-      run: echo ${{ github.event_name }}
+      run: echo ${{ github.ref_type }}
   
