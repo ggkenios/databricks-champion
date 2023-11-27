@@ -1,8 +1,8 @@
 <p align="center">
-  <a href="https://devoteam.com"><img src="https://media.licdn.com/dms/image/C560BAQEloqEBLHUukg/company-logo_200_200/0/1630631081923/devoteam_logo?e=1709164800&v=beta&t=amHRy8uUVDG-4Kk0ah38IONJIF5uELeVTdj0_7f_nIU" alt="Devoteam"></a>
+  <a href="https://devoteam.com"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Dev_logo_rgb.png/640px-Dev_logo_rgb.png" alt="Devoteam"></a>
 </p>
 
-## CI/CD
+# Databricks Champion Demo
 | | |
 | --- | --- |
 | Tests | [![CI - Test](https://github.com/ggkenios/databricks-champion/actions/workflows/cicd.yml/badge.svg)](https://github.com/ggkenios/databricks-champion/actions/workflows/backend.yml) |
@@ -26,8 +26,8 @@ The pipeline consists of the following steps:
 <br>
 
 ## Requirements
-* **__Databricks__** workspace
-* Link between **__Databricks__** workspace and **__GitHub__** account
-* **__GitHub secrets__** for:
+* **`__Databricks workspace`**
+* Link **`Databricks`** with your **`GitHub`** account
+* **`GitHub secrets`** for:
     * Databricks URL
     * Databricks token
