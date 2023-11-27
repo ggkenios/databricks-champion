@@ -1,0 +1,15 @@
+name: Databricks CI/CD
+
+on:
+  push
+
+jobs:
+  Push:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Echo
+      run: echo ${{ github.event_name }}
+  
