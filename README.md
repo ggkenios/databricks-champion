@@ -26,8 +26,8 @@ The pipeline consists of the following steps:
 <br>
 
 ## Requirements
-* **`__Databricks workspace`**
-* Link **`Databricks`** with your **`GitHub`** account
+* **`Databricks workspace`**
+* Link between **`Databricks`** and **`GitHub`**, within the Databricks workspace
 * **`GitHub secrets`** for:
     * Databricks URL
     * Databricks token
