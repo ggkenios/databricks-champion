@@ -12,9 +12,12 @@ inputs:
   repo_url:
     required: true
     description: "The URL of the git repository to import"
-  branch:
+  branch_or_tag:
     required: true
     description: "The branch to import. If not specified, the default branch will be used"
+  type_of_trigger:
+    required: true
+    description: "The type of trigger to use. If not specified, the default trigger will be used"
   databricks_path:
     required: true
     description: "The path in Databricks where the repository should be imported"
@@ -133,6 +136,6 @@ runs:
         ).create_or_update_repo(
             repo_url = "${{ inputs.repo_url }}",
             databricks_path = "${{ inputs.databricks_path }}",
-            branch = "${{ inputs.branch }}",
+            ${{ inputs.type_of_trigger }} = "${{ inputs.branch_or_tag }}",
         )
         '

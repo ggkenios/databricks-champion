@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - dev
+  release:
+    types: [published]
+
 
 env:
   DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
@@ -15,6 +18,7 @@ env:
   DATABRICKS_REPO_PATH_STAGING: staging
   DATABRICKS_REPO_PATH_PRODUCTION: prod
 
+
 jobs:
   Push:
     runs-on: ubuntu-latest
@@ -22,13 +26,13 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Databricks Repo Path
+    - name: Identify Repo Path
       id: path
       run: |
-        if [[ "${{ github.ref_name }}" == "dev" ]]; then
-          echo REPO_PATH=${{ env.DATABRICKS_REPO_PATH_DEVELOPMENT}} >> $GITHUB_OUTPUT
+        if [[ "${{ github.ref_type }}" == "tag" ]]; then
+          echo REPO_PATH=${{ env.DATABRICKS_REPO_PATH_STAGING }} >> $GITHUB_OUTPUT
         else
-          echo REPO_PATH=${{ env.DATABRICKS_REPO_PATH_STAGING}} >> $GITHUB_OUTPUT
+          echo REPO_PATH=${{ env.DATABRICKS_REPO_PATH_DEVELOPMENT }} >> $GITHUB_OUTPUT
         fi
 
     - name: Create or Update Databricks Repo
@@ -36,32 +40,32 @@ jobs:
       with:
         databricks_host: ${{ env.DATABRICKS_HOST }}
         databricks_token: ${{ env.DATABRICKS_TOKEN }}
-        repo_url:  ${{ github.event.repository.url }}
-        branch: ${{ github.ref_name }}
         databricks_path: /Repos/${{ steps.path.outputs.REPO_PATH }}/${{ github.event.repository.name }}
+        repo_url:  ${{ github.event.repository.url }}
+        branch_or_tag: ${{ github.ref_name }}
+        type_of_trigger: ${{ github.ref_type }}
 
     - name: Run Tests
       uses: ./.github/actions/jobs
       with:
         databricks_host: ${{ env.DATABRICKS_HOST }}
         databricks_token: ${{ env.DATABRICKS_TOKEN }}
-        repo_url:  ${{ github.event.repository.url }}
-        branch: ${{ github.ref_name }}
+        databricks_path: /Repos/${{ steps.path.outputs.REPO_PATH }}/${{ github.event.repository.name }}
         folder_path: ${{ env.TESTS_DIRECTORY }}
         requirements_path: ${{ env.REQUIREMENTS_PATH }}
         cluster_config_path: ${{ env.CLUSTER_CONFIG_PATH }}
 
   Release:
     needs: [Push]
-    if: startsWith(github.ref, 'release')
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
-    - name: Create or Update Databricks Repo
+    - name: Create or Update Databricks Production Repo
       uses: ./.github/actions/repos
       with:
         databricks_host: ${{ env.DATABRICKS_HOST }}
         databricks_token: ${{ env.DATABRICKS_TOKEN }}
+        databricks_path: /Repos/${{ env.DATABRICKS_REPO_PATH_PRODUCTION }}/${{ github.event.repository.name }}
         repo_url:  ${{ github.event.repository.url }}
-        branch: ${{ github.ref_name }}
-        databricks_path: /Repos/prod/${{ github.event.repository.name }}
-      
+        branch_or_tag: ${{ github.ref_name }}
+        type_of_trigger: ${{ github.ref_type }}

@@ -9,12 +9,9 @@ inputs:
   databricks_token:
     required: true
     description: "The Databricks token to use for authentication"
-  repo_url:
+  databricks_path:
     required: true
-    description: "The URL of the git repository to import"
-  branch:
-    required: true
-    description: "The branch to import. If not specified, the default branch will be used"
+    description: "The path in Databricks where the repository should be imported"
   folder_path:
     required: true
     description: "The path to the folder containing the notebook to run"
@@ -79,6 +76,7 @@ runs:
 
             def create_tasks(
                 self,
+                databricks_path: str,
                 folder_path: str,
                 requirements_path: str,
                 cluster_config_path: str,
@@ -96,33 +94,25 @@ runs:
                         "new_cluster": cluster_config,
                         "libraries": requirements,
                         "notebook_task": {
-                            "notebook_path": file,
-                            "source": "GIT",
+                            "notebook_path": f"{databricks_path}/{file}",
+                            "source": "WORKSPACE",
                         }
                     })
                 return tasks
 
             def one_time_run(
-                self, 
-                git_repo: str,
-                git_branch: str,
+                self,
+                job_name: str,
                 tasks: list[dict],
-                git_provider: str = "gitHub"
             ) -> int:
                 """Submit a one-time run to Databricks."""
-                repo_name = git_repo.split("/")[-1].replace(".git", "")
                 response = requests.post(
                     f"{self.databricks_url}/api/2.1/jobs/runs/submit",
                     headers={"Authorization": f"Bearer {self.databricks_token}"},
                     json={
+                        "run_name": job_name,
                         "tasks": tasks,
-                        "git_source": {
-                            "git_url": git_repo,
-                            "git_provider": git_provider,
-                            "git_branch": git_branch
-                        },
-                        "run_name": f"Repo: {repo_name} | Branch: {git_branch} | Reason: Testing",
-                    }
+        }
                 )
                 if response.status_code >= 300:
                     print(response.json())
@@ -177,13 +167,13 @@ runs:
             databricks_token="${{ inputs.databricks_token }}"
         )
         tasks = job.create_tasks(
+            databricks_path="${{ inputs.databricks_path }}",
             folder_path="${{ inputs.folder_path }}", 
             requirements_path="${{ inputs.requirements_path }}",
             cluster_config_path="${{ inputs.cluster_config_path }}",
         )
         run_id = job.one_time_run(
-            git_repo="${{ inputs.repo_url }}",
-            git_branch="${{ inputs.branch }}",
+            job_name="${{ inputs.databricks_path }}".split("/")[-1],
             tasks=tasks,
         )
         job.await_run_completion(run_id=run_id)
