@@ -56,7 +56,7 @@ runs:
                 repo_url: str,
                 databricks_path: str,
                 provider: str = "gitHub",
-            ) -> None:
+            ) -> int:
                 """Copies a Repo from your git provider to Databricks."""
                 response = requests.post(
                     url=f"{self.databricks_url}/api/2.0/repos",
@@ -68,6 +68,7 @@ runs:
                     }
                 )
                 response.raise_for_status()
+                return response.json()["id"]
 
             def update_repo(self,
                 repo_id: str,
@@ -114,18 +115,17 @@ runs:
                 """Creates or updates a Databricks Repo"""
                 id = self.get_repo_id(databricks_path)
 
-                if id:
-                    self.update_repo(id, branch, tag)
-                    print("Repo updated.")
-                else:
+                if not id:
                     try:
-                        self.create_repo(repo_url, databricks_path, provider)
+                        id = self.create_repo(repo_url, databricks_path, provider)
                     except requests.exceptions.HTTPError:
                         dir_to_create = "/".join(databricks_path.split("/")[:-1])
                         self.create_directory(dir_to_create)
-                        self.create_repo(repo_url, databricks_path, provider)
-                        self.update_repo(id, branch, tag)
+                        id = self.create_repo(repo_url, databricks_path, provider)
                     print("Repo created.")
+
+                self.update_repo(id, branch, tag)
+                print("Repo updated.")
 
 
         DatabricksRepos(
