@@ -6,5 +6,10 @@ __pycache__
 pyproject.toml
 poetry.lock
 
+# Terraform
+*/.terraform
+*terraform.lock.hcl
+*.tfstate
+
 # Testing file
 z.py
