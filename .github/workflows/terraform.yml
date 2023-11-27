@@ -24,8 +24,9 @@ jobs:
       with:
         terraform_version: ${{ env.TERRAFORM_VERSION }}
 
-    - name: Run terraform init
+    - name: Run terraform
       working-directory: ${{ env.TERRAFORM_DIR }}
       run: |
         terraform init
-        terraform plan -var="databricks_host=${{ env.DATABRICKS_HOST }}" -var="databricks_token=${{ env.DATABRICKS_TOKEN }}" -var="git_username=${{ github.repository_owner }}" -var="git_provider=${{ env.GIT_PROVIDER }} -var="git_token=${{ env.GIT_TOKEN }}"
+        terraform plan -var="databricks_host=${{ env.DATABRICKS_HOST }}" -var="databricks_token=${{ env.DATABRICKS_TOKEN }}" -var="git_username=${{ github.repository_owner }}" -var="git_provider=${{ env.GIT_PROVIDER }}" -var="git_token=${{ env.GIT_TOKEN }}" -out plan.tfplan
+        terraform apply plan.tfplan
