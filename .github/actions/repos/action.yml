@@ -90,6 +90,14 @@ runs:
                 )
                 response.raise_for_status()
 
+            def delete_repo(self, repo_id: str) -> None:
+                """Deletes a Repo on Databricks."""
+                response = requests.delete(
+                    url=f"{self.databricks_url}/api/2.0/repos/{repo_id}",
+                    headers={"Authorization": f"Bearer {self.databricks_token}"}
+                )
+                response.raise_for_status()
+
             def get_repo_id(self,
                 databricks_path: str
             ) -> int | None:
@@ -124,7 +132,12 @@ runs:
                         id = self.create_repo(repo_url, databricks_path, provider)
                     print("Repo created.")
 
-                self.update_repo(id, branch, tag)
+                try:
+                    self.update_repo(id, branch, tag)
+                except requests.exceptions.HTTPError:
+                    self.delete_repo(id)
+                    self.create_repo(repo_url, databricks_path, provider)
+                    self.update_repo(id, branch, tag)
                 print("Repo updated.")
 
 
