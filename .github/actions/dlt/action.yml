@@ -1,0 +1,215 @@
+name: "dlt"
+description: "Creates or updates a DLT Databricks pipeline"
+
+
+inputs:
+  databricks_host:
+    required: true
+    description: "The URL of your Databricks workspace, e.g. https://westeurope.azuredatabricks.net"
+  databricks_token:
+    required: true
+    description: "The Databricks token to use for authentication"
+  databricks_path:
+    required: true
+    description: "The path in Databricks where the repository should be imported"
+  name:
+    required: true
+    description: "The URL of the git repository to import"
+  folder_path:
+    required: true
+    description: "The path to the folder containing the notebook to run"
+  cluster_config_path:
+    required: true
+    description: "The path to the json file for the cluster configuration"
+
+
+runs:
+  using: "composite"
+  steps:
+    - name: Import libraries
+      shell: bash
+      run: |
+        pip install requests
+
+    - name: Get environment
+      id: check
+      shell: bash
+      run: |
+        python3 -c '
+        import requests
+        import json
+        import time
+        import os
+
+
+        class DatabricksDLT:
+            def __init__(self, databricks_url: str, databricks_token: str):
+                self.databricks_url = databricks_url
+                self.databricks_token = databricks_token
+
+            @staticmethod
+            def get_all_files_in_folder(folder_path) -> list[str]:
+                """Get all the files in a folder whether in subdir or not."""
+                all_files = []
+                for foldername, _, filenames in os.walk(folder_path):
+                    for filename in filenames:
+                        if filename.endswith(".py"):
+                            file_path = os.path.join(foldername, filename)
+                            fixed_path = file_path.replace("\\", "/").replace(".py", "")
+                            all_files.append(fixed_path)
+                return all_files[0]
+
+            @staticmethod
+            def get_cluster_config(cluster_config_path: str) -> dict:
+                cluster_config: dict = json.load(open(cluster_config_path))
+                if cluster_config.get("spark_version"):
+                    cluster_config.pop("spark_version")
+                return cluster_config
+
+            def create_libraries(self, databricks_file_path: str) -> None:
+                to_return = [({"notebook": {"path": databricks_file_path}})]
+                return to_return
+
+            def create_pipeline(
+                self,
+                name: str,
+                databricks_file_path: str,
+                cluster_config_path: str
+            ) -> None:
+                """Creates a directory in Databricks."""
+                response = requests.post(
+                    url=f"{self.databricks_url}/api/2.0/pipelines",
+                    headers={"Authorization": f"Bearer {self.databricks_token}"},
+                    json={
+                        "name": name,
+                        "libraries": self.create_libraries(databricks_file_path),
+                        "development": True,
+                        "continuous": False,
+                        "photon": False,
+                        "clusters": self.get_cluster_config(cluster_config_path),
+                    },
+                )
+                if response.status_code == 409:
+                    print("Pipeline already exists.")
+                    return None
+                response.raise_for_status()
+                return response.json()["pipeline_id"]
+
+            def update_pipeline(
+                self,
+                pipeline_id: str,
+                name: str,
+                databricks_file_path: str,
+                cluster_config_path: str,
+            ) -> None:
+                """Creates a directory in Databricks."""
+                response = requests.put(
+                    url=f"{self.databricks_url}/api/2.0/pipelines/{pipeline_id}",
+                    headers={"Authorization": f"Bearer {self.databricks_token}"},
+                    json={
+                        "name": name,
+                        "libraries": self.create_libraries(databricks_file_path),
+                        "development": True,
+                        "continuous": False,
+                        "photon": False,
+                        "clusters": self.get_cluster_config(cluster_config_path),
+                    },
+                )
+                response.raise_for_status()
+
+            def get_pipeline(self, name: str) -> dict:
+                """Gets a pipeline in Databricks."""
+                response = requests.get(
+                    url=f"{self.databricks_url}/api/2.0/pipelines",
+                    headers={"Authorization": f"Bearer {self.databricks_token}"},
+                    params={"max_results": 1, "filter": f"name LIKE '\''{name}'\''"}
+                )
+                response.raise_for_status()
+                return response.json()["statuses"][0]["pipeline_id"]
+
+            def create_or_update_pipeline(
+                self,
+                name: str,
+                databricks_file_path: str,
+                cluster_config_path: str,
+            ) -> str:
+                """Creates a directory in Databricks."""
+                pipeline_id = self.create_pipeline(
+                    name=name,
+                    databricks_file_path=databricks_file_path,
+                    cluster_config_path=cluster_config_path
+                )
+
+                if not pipeline_id:
+                    pipeline_id = self.get_pipeline(name=name)
+                    
+                    self.update_pipeline(
+                        pipeline_id=pipeline_id,
+                        name=name,
+                        databricks_file_path=databricks_file_path,
+                        cluster_config_path=cluster_config_path,
+                    )
+                return pipeline_id
+
+            def run_pipeline(self, pipeline_id: str) -> None:
+                """Runs a pipeline in Databricks."""
+                response = requests.post(
+                    url=f"{self.databricks_url}/api/2.0/pipelines/{pipeline_id}/updates",
+                    headers={"Authorization": f"Bearer {self.databricks_token}"},
+                    json={"pipeline_id": pipeline_id},
+                )
+                response.raise_for_status()
+
+            def get_pipeline_status(self, pipeline_id: str) -> str:
+                """Gets the status of a pipeline in Databricks."""
+                response = requests.get(
+                    url=f"{self.databricks_url}/api/2.0/pipelines/{pipeline_id}",
+                    headers={"Authorization": f"Bearer {self.databricks_token}"},
+                )
+                response.raise_for_status()
+                return (
+                    response.json()["state"],
+                    response.json()["latest_updates"][0]["state"]
+                )
+
+            def await_pipeline_completion(self, pipeline_id: str) -> None:
+                """Waits for a pipeline to complete in Databricks."""
+                link = f"{self.databricks_url}/#joblist/pipelines/{pipeline_id}"
+                message = (
+                    "Pipeline is running. Click on the link below: \n"
+                    f"{link} \n"
+                )
+                print(message)
+
+                while True:
+                    state, latest_state = self.get_pipeline_status(pipeline_id)
+                    if state != "IDLE":
+                        time.sleep(30)
+                        continue
+                    else:
+                        break
+                    
+                if latest_state == "FAILED":
+                    message = (
+                        "Pipeline failed. Click on the link below for more details: \n"
+                        f"{link} \n"
+                    )
+                    raise Exception(message)
+                else:
+                    print("Pipeline completed successfully.")
+
+
+        db = DatabricksDLT(
+            databricks_url = "${{ inputs.databricks_host }}",
+            databricks_token = "${{ inputs.databricks_token }}",
+        )
+        file_path = db.get_all_files_in_folder(folder_path="${{ inputs.folder_path }}")
+        databricks_file_path = f"${{ inputs.databricks_path }}/{file_path}"
+        pipeline_id = db.create_or_update_pipeline(
+            name="${{ inputs.name }}",
+            databricks_file_path=databricks_file_path,
+            cluster_config_path="${{ inputs.cluster_config_path }}"
+        )
+        db.run_pipeline(pipeline_id=pipeline_id)
+        db.await_pipeline_completion(pipeline_id=pipeline_id)
+        '

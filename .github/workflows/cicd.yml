@@ -11,12 +11,19 @@ on:
 env:
   DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
   DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
-  TESTS_DIRECTORY: tests
-  REQUIREMENTS_PATH: tests/requirements.txt
-  CLUSTER_CONFIG_PATH: tests/cluster.json
+  # Datatabricks Repo Paths
   DATABRICKS_REPO_PATH_DEVELOPMENT: dev
   DATABRICKS_REPO_PATH_STAGING: staging
   DATABRICKS_REPO_PATH_PRODUCTION: prod
+  # Directories to run tests
+  UNIT_TEST_DIR: tests/unit
+  INTEGRATION_TEST_DIR: tests/integration
+  REQUIREMENTS_FILE: requirements.txt
+  CLUSTER_CONFIG_FILE: cluster.json
+  # Booleans for running tests
+  UNIT_TEST: true
+  INTEGRATION_TEST_WITH_WORKFLOWS: true
+  INTEGRATION_TEST_WITH_DLT: false
 
 
 jobs:
@@ -45,15 +52,40 @@ jobs:
         branch_or_tag: ${{ github.ref_name }}
         type_of_trigger: ${{ github.ref_type }}
 
-    - name: Run Tests
+    - name: Unit Test - Workflows
+      if: ${{ env.UNIT_TEST == 'true' }}
       uses: ./.github/actions/jobs
       with:
         databricks_host: ${{ env.DATABRICKS_HOST }}
         databricks_token: ${{ env.DATABRICKS_TOKEN }}
         databricks_path: /Repos/${{ steps.path.outputs.REPO_PATH }}/${{ github.event.repository.name }}
-        folder_path: ${{ env.TESTS_DIRECTORY }}
-        requirements_path: ${{ env.REQUIREMENTS_PATH }}
-        cluster_config_path: ${{ env.CLUSTER_CONFIG_PATH }}
+        name: "Testing: ${{ github.event.repository.name }} | ${{ github.ref_name }}"
+        folder_path: ${{ env.UNIT_TEST_DIR }}
+        requirements_path: ${{ env.UNIT_TEST_DIR }}/${{ env.REQUIREMENTS_FILE }}
+        cluster_config_path: ${{ env.UNIT_TEST_DIR }}/${{ env.CLUSTER_CONFIG_FILE }}
+
+    - name: Integration Test - Workflows
+      if: ${{ env.INTEGRATION_TEST_WITH_WORKFLOWS == 'true' }}
+      uses: ./.github/actions/jobs
+      with:
+        databricks_host: ${{ env.DATABRICKS_HOST }}
+        databricks_token: ${{ env.DATABRICKS_TOKEN }}
+        databricks_path: /Repos/${{ steps.path.outputs.REPO_PATH }}/${{ github.event.repository.name }}
+        name: "Testing: ${{ github.event.repository.name }} | ${{ github.ref_name }}"
+        folder_path: ${{ env.INTEGRATION_TEST_DIR }}
+        requirements_path: ${{ env.INTEGRATION_TEST_DIR }}/${{ env.REQUIREMENTS_FILE }}
+        cluster_config_path: ${{ env.INTEGRATION_TEST_DIR }}/${{ env.CLUSTER_CONFIG_FILE }}
+  
+    - name: Integration Test - DLT
+      if: ${{ env.INTEGRATION_TEST_WITH_DLT == 'true' }}
+      uses: ./.github/actions/dlt
+      with:
+        databricks_host: ${{ env.DATABRICKS_HOST }}
+        databricks_token: ${{ env.DATABRICKS_TOKEN }}
+        databricks_path: /Repos/${{ steps.path.outputs.REPO_PATH }}/${{ github.event.repository.name }}
+        name: "Testing: ${{ github.event.repository.name }} | ${{ github.ref_name }}"
+        folder_path: ${{ env.INTEGRATION_TEST_DIR }}
+        cluster_config_path: ${{ env.INTEGRATION_TEST_DIR }}/${{ env.CLUSTER_CONFIG_FILE }}
 
   Release:
     needs: [Push]
