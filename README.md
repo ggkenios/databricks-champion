@@ -30,9 +30,9 @@ The pipeline consists of the following steps:
 ## Requirements
 * **`Databricks workspace`**
 * **`GitHub variables & secrets`** for:
-    * DATABRICKS_HOST
+    * DATABRICKS_HOST <br>
       Variable: The url of the databricks workspace
-    * DATBRICKS_TOKEN
+    * DATBRICKS_TOKEN <br>
       Secret: The access token of a user with admin rights
 <br>
 
