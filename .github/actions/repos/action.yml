@@ -109,7 +109,7 @@ runs:
                 )
                 response.raise_for_status()
                 try:
-                    return response.json()["repos"][0]["id"]
+                    return response.json()["repos"][-1]["id"]
                 except KeyError:
                     return None
 
