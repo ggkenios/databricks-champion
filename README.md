@@ -29,6 +29,12 @@ The pipeline consists of the following steps:
 
 ## Requirements
 * **`Databricks workspace`**
-* **`GitHub secrets`** for:
-    * Databricks URL
-    * Databricks token
+* **`GitHub variables & secrets`** for:
+    * DATABRICKS_HOST
+      Variable: The url of the databricks workspace
+    * DATBRICKS_TOKEN
+      Secret: The access token of a user with admin rights
+<br>
+
+## Inspired By
+https://github.com/alexott/databricks-nutter-repos-demo
