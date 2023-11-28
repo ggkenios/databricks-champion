@@ -19,7 +19,9 @@ The pipeline is triggered when a new commit is pushed to selected branches. <br>
 <br>
 The pipeline consists of the following steps:
 * **Push** <br>
-    Pushes the code to the Databricks workspace and runs unit and integration tests.
+    Pushes the code to the Databricks workspace and runs 
+    - **`Unit Test`** on databricks worflows 
+    - **`Integration Test`** on databricks worflows or DLT
 
 * **Release** <br>
     If the tests pass on the staging environment, the code is released to the production environment.
@@ -27,7 +29,6 @@ The pipeline consists of the following steps:
 
 ## Requirements
 * **`Databricks workspace`**
-* Link between **`Databricks`** and **`GitHub`**, within the Databricks workspace
 * **`GitHub secrets`** for:
     * Databricks URL
     * Databricks token
