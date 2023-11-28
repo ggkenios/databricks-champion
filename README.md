@@ -5,7 +5,7 @@
 # Databricks Champion Demo
 | | |
 | --- | --- |
-| Tests | [![CI - Test](https://github.com/ggkenios/databricks-champion/actions/workflows/cicd.yml/badge.svg)](https://github.com/ggkenios/databricks-champion/actions/workflows/backend.yml) |
+| Tests | [![CI - Test](https://github.com/ggkenios/databricks-champion/actions/workflows/cicd.yml/badge.svg)](https://github.com/ggkenios/databricks-champion/actions/workflows/cicd.yml) |
 <br>
 
 ## Table of Contents
