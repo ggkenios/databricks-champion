@@ -11,6 +11,7 @@
 ## Table of Contents
 - [What it does](#what-it-does)
 - [Requirements](#requirements)
+- [Inspired By](#inspired-by)
 <br>
 
 ## What it does
