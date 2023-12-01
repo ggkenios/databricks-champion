@@ -41,6 +41,13 @@ jobs:
         else
           echo REPO_PATH=${{ env.DATABRICKS_REPO_PATH_DEVELOPMENT }} >> $GITHUB_OUTPUT
         fi
+    
+    - name: Checks
+      run: |
+        echo "Repo Path: ${{ steps.path.outputs.REPO_PATH }}"
+        echo "Repo URL: ${{ github.event.repository.url }}"
+        echo "Branch or Tag: ${{ github.ref_name }}"
+        echo "Type of Trigger: ${{ github.ref_type }}"
 
     - name: Create or Update Databricks Repo
       uses: ./.github/actions/repos
