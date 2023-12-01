@@ -92,6 +92,9 @@ jobs:
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
     - name: Create or Update Databricks Production Repo
       uses: ./.github/actions/repos
       with:
