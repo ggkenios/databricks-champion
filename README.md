@@ -1,8 +1,4 @@
-<p align="center">
-  <a href="https://devoteam.com"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Dev_logo_rgb.png/640px-Dev_logo_rgb.png" alt="Devoteam"></a>
-</p>
-
-# Databricks Champion Demo #1
+# Databricks Tests
 | | |
 | --- | --- |
 | Tests | [![CI - Test](https://github.com/ggkenios/databricks-champion/actions/workflows/cicd.yml/badge.svg)](https://github.com/ggkenios/databricks-champion/actions/workflows/cicd.yml) |
